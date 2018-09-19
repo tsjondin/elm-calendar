@@ -1,0 +1,133 @@
+.calendar {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    font: 10pt sans-serif;
+}
+
+.calendar-title {
+    padding: 8px;
+    font-size: 12pt;
+    text-align: center;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+.calendar-title-text {
+    width: 25%;
+    min-width: 128px;
+    display: inline-block;
+}
+
+.calendar-selector {
+  padding: 0px 8px ;
+  text-align: center;
+  cursor: pointer;
+}
+
+.calendar-year {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+}
+
+.calendar-year-month {
+  width: 300px;
+  margin: 16px 2%;
+  top: 2%;
+  text-align: right;
+  justify-content: space-evenly;
+}
+
+.calendar-year-month-title {
+  font-size: 11pt;
+  color: #666;
+  text-align: left;
+}
+
+.calendar-year .calendar-cell {
+  border: none;
+  min-height: 24px;
+  padding: 0;
+}
+
+.calendar-month {
+  display: flex;
+  width: 100%;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.calendar-week {
+  display: flex;
+  width: 100%;
+  flex: 1 1 auto;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.calendar-cell {
+  width: 100%;
+  min-height: 64px;
+  flex: 1 1 auto;
+  border: 1px solid #ccc;
+  color: #444;
+}
+
+.calendar-cell-title {
+  padding: 8px 8px 4px 8px;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+.calendar-cell-selected {
+  background-color: #fff;
+}
+
+.calendar-cell-inactive {
+  color: #888;
+  border-color: #ddd;
+}
+
+.calendar-cell-active {
+  background-color: #fff;
+}
+
+.calendar-cell-current .calendar-cell-title {
+  background-color: #48f;
+  color: #fff;
+  font-weight: bold;
+}
+
+.calendar-event {
+  padding: 2px 8px;
+  font-size: 8pt;
+}
+
+.calendar-event-time {
+  display: inline;
+}
+
+.calendar-event-time:before {
+  display: inline-block;
+  content: ' ';
+  border-radius: 4px;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  background-color: #48f;
+}
+
+.calendar-event-title {
+  display: inline;
+}
+
+.calendar-cell-inactive .calendar-cell-event {
+  opacity: 0.7;
+}
