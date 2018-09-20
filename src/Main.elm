@@ -26,8 +26,8 @@ main =
 type alias Model =
     { calendar : Calendar.Model
     , pass :
-        { hour : Maybe Int
-        , minute : Maybe Int
+        { hour : Int
+        , minute : Int
         }
     }
 
@@ -35,8 +35,7 @@ type alias Model =
 type Msg
     = CalendarMessage Calendar.Msg
     | CreateReminder Date
-    | SetHour String
-    | SetMinute String
+    | SetTime Int Int
 
 
 init : () -> ( Model, Cmd Msg )
@@ -47,8 +46,8 @@ init _ =
     in
         ( { calendar = calendar
           , pass =
-                { hour = Nothing
-                , minute = Nothing
+                { hour = 0
+                , minute = 0
                 }
           }
         , (Cmd.map CalendarMessage subcmd)
@@ -59,36 +58,25 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         CreateReminder date ->
-            case ( model.pass.hour, model.pass.minute ) of
-                ( Just hour, Just minute ) ->
-                    (let
-                        event =
-                            Calendar.Reminder date
-                                (partsToPosix utc (Parts (Date.year date) (Date.month date) (Date.day date) hour minute 0 0))
-                                { id = "my-id", brief = "Some event" }
-
-                        ( calendar, subcmd ) =
-                            Calendar.update (Calendar.AddEvent event) model.calendar
-                     in
-                        ( { model | calendar = calendar }, (Cmd.map CalendarMessage subcmd) )
+            (let
+                event =
+                    (Calendar.Reminder date
+                        (partsToPosix utc (Parts (Date.year date) (Date.month date) (Date.day date) model.pass.hour model.pass.minute 0 0))
+                        { id = "my-id", brief = "Some event" }
                     )
 
-                ( _, _ ) ->
-                    ( model, Cmd.none )
+                ( calendar, subcmd ) =
+                    Calendar.update (Calendar.AddEvent event) model.calendar
+             in
+                ( { model | calendar = calendar }, (Cmd.map CalendarMessage subcmd) )
+            )
 
-        SetHour hour ->
+        SetTime hour minute ->
             let
                 pass =
                     model.pass
             in
-                ( { model | pass = { pass | hour = toInt hour } }, Cmd.none )
-
-        SetMinute minute ->
-            let
-                pass =
-                    model.pass
-            in
-                ( { model | pass = { pass | minute = toInt minute } }, Cmd.none )
+                ( { model | pass = { hour = hour, minute = minute } }, Cmd.none )
 
         CalendarMessage submsg ->
             let
@@ -136,7 +124,7 @@ timeselector attributes granularity =
                         minute =
                             (modBy 60 (h * granularity))
                      in
-                        option []
+                        option [ onClick (SetTime hour minute) ]
                             [ text (pad 2 '0' (fromInt hour))
                             , text ":"
                             , text (pad 2 '0' (fromInt minute))
@@ -156,8 +144,7 @@ eventcreateview selected model =
         div [ class "dialog-overlay" ]
             [ div [ class "dialog" ]
                 [ form [ onSubmit (CreateReminder selected) ]
-                    [ div [ class "dialog-title" ] [ text "Skapa pass" ]
-                    , input [ type_ "text", class "event-creator-title", placeholder "Lägg till titel..." ] []
+                    [ input [ type_ "text", class "event-creator-title", placeholder "Lägg till titel..." ] []
                     , div [ class "form-field-group" ]
                         [ span [ class "event-creator-date" ] [ text (Date.format "MMM d" selected) ]
                         , timeselector [ class "event-creator-time" ] granularity

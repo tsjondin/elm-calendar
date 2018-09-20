@@ -9,12 +9,12 @@ import List exposing (map, range, filter, concat, append)
 import Maybe exposing (Maybe)
 import Task
 import Time exposing (Posix, utc, toHour, toMinute)
-import String exposing (fromInt, pad)
+import String exposing (fromInt)
 import String.Format as Format
 
 
-type CalendarEvent
-    = Event Date CalendarTimeRange EventTag
+type Event
+    = Meeting Date ( Posix, Posix ) EventTag
     | Reminder Date Posix EventTag
 
 
@@ -24,10 +24,6 @@ type alias EventTag =
     }
 
 
-type CalendarTimeRange
-    = TimeRange Posix Posix
-
-
 type View
     = YearView
     | MonthView
@@ -35,14 +31,10 @@ type View
     | DayView
 
 
-type alias EventManager =
-    List CalendarEvent
-
-
 type alias Model =
     { date : Date
     , today : Date
-    , events : EventManager
+    , events : List Event
     , selected : Maybe Date
     , view : View
     }
@@ -59,8 +51,8 @@ type Msg
     | DayBack
     | DateSelect Date
     | SetView View
-    | AddEvent CalendarEvent
-    | RemoveEvent CalendarEvent
+    | AddEvent Event
+    | RemoveEvent Event
     | Initialize Date
 
 
@@ -130,7 +122,7 @@ update msg model =
 
         AddEvent event ->
             case event of
-                Event _ _ _ ->
+                Meeting _ _ _ ->
                     ( { model
                         | events =
                             event :: model.events
@@ -155,17 +147,19 @@ update msg model =
                                 (\e -> (e == event))
                                 model.events
                             )
+                        , selected = Nothing
                       }
                     , Cmd.none
                     )
 
-                Event _ _ _ ->
+                Meeting _ _ _ ->
                     ( { model
                         | events =
                             (filter
                                 (\e -> (e == event))
                                 model.events
                             )
+                        , selected = Nothing
                       }
                     , Cmd.none
                     )
@@ -183,7 +177,7 @@ view model =
                         , span [ class "calendar-title-text" ] [ text ("Year " ++ (Date.format "y" model.date)) ]
                         , span [ class "calendar-selector", onClick YearForward ] [ text "▶" ]
                         ]
-                    , (yearview model model.date)
+                    , yearview model model.date
                     ]
 
             MonthView ->
@@ -207,7 +201,7 @@ view model =
                             , span [ class "calendar-title-text" ] [ text ("Week " ++ (Date.format "w" model.date)) ]
                             , span [ class "calendar-selector", onClick WeekForward ] [ text "▶" ]
                             ]
-                        , (weekview model firstOfWeek 0)
+                        , weekview model firstOfWeek 0
                         ]
 
             DayView ->
@@ -217,7 +211,7 @@ view model =
                         , span [ class "calendar-title-text" ] [ text (Date.format "MMMM dd" model.date) ]
                         , span [ class "calendar-selector", onClick DayForward ] [ text "▶" ]
                         ]
-                    , (dateview model model.date)
+                    , dateview model model.date
                     ]
           )
         ]
@@ -257,7 +251,7 @@ monthview model date =
         div [ class "calendar-month" ]
             (map
                 (\row ->
-                    (weekview model firstDateOfView row)
+                    weekview model firstDateOfView row
                 )
                 (range 0 5)
             )
@@ -297,7 +291,7 @@ dateview model date =
             filter
                 (\e ->
                     (case e of
-                        Event eventdate _ _ ->
+                        Meeting eventdate _ _ ->
                             (eventdate == date)
 
                         Reminder eventdate _ _ ->
@@ -320,35 +314,37 @@ dateview model date =
               )
             ]
             (div [ class "calendar-cell-title" ] [ text (Date.format "d" date) ]
-                :: (map eventview events)
+                :: map eventview events
             )
 
 
-eventview : CalendarEvent -> Html Msg
+eventview : Event -> Html Msg
 eventview event =
-    case event of
-        Reminder date time tag ->
-            div [ class "calendar-event" ]
-                [ div [ class "calendar-event-header" ]
-                    [ div [ class "calendar-event-time" ]
-                        [ text
-                            ("{{}}:{{}}"
-                                |> Format.value (pad 2 '0' (fromInt (toHour utc time)))
-                                |> Format.value (pad 2 '0' (fromInt (toMinute utc time)))
-                            )
+    let
+        formattime zone time =
+            ("{{}}:{{}}"
+                |> Format.value (String.pad 2 '0' (fromInt (toHour zone time)))
+                |> Format.value (String.pad 2 '0' (fromInt (toMinute zone time)))
+            )
+    in
+        case event of
+            Reminder date time tag ->
+                div [ class "calendar-event" ]
+                    [ div [ class "calendar-event-header" ]
+                        [ div [ class "calendar-event-time" ]
+                            [ text (formattime utc time) ]
+                        , text " - "
+                        , div [ class "calendar-event-title" ] [ text tag.brief ]
                         ]
-                    , text " - "
-                    , div [ class "calendar-event-title" ] [ text tag.brief ]
                     ]
-                ]
 
-        Event date range tag ->
-            div [ class "calendar-event" ]
-                [ div [ class "calendar-event-header" ]
-                    [ div [ class "calendar-event-time" ]
-                        [ text "Foobar"
+            Meeting date range tag ->
+                div [ class "calendar-event" ]
+                    [ div [ class "calendar-event-header" ]
+                        [ div [ class "calendar-event-time" ]
+                            [ text "Foobar"
+                            ]
+                        , text " - "
+                        , div [ class "calendar-event-title" ] [ text tag.brief ]
                         ]
-                    , text " - "
-                    , div [ class "calendar-event-title" ] [ text tag.brief ]
                     ]
-                ]

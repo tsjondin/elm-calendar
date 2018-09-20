@@ -22,10 +22,11 @@ body {
     box-shadow: 0 4px 2px rgba(0,0,0,0.2);
     margin-top: -30%;
     min-width: 512px;
+    padding-top: 16px;
 }
 
 .dialog-title {
-    padding: 16px;
+    padding: 0 16px 16px 16px;
     font-size: 13pt;
     border-bottom: 1px solid #ddd;
     color: #666;
